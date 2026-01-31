@@ -56,8 +56,9 @@ def run():
             for i in range(x, 0, -1):
                 for j in range(10):
                     A[i][j] = A[i - 1][j]
-    screen = pygame.display.set_mode((10 * HEIGHT + 10, k * HEIGHT + k))  # главный экран
-
+    screen = pygame.display.set_mode((10 * HEIGHT + 10 + 300, k * HEIGHT + k))  # главный экран
+    myfont = pygame.font.Font("fonts/Black_Roboto.ttf", 40)
+    res = 0 #счётчик уничтоженных рядов
     A = [[BACKGROUND for _ in range(10)] for _ in range(k)]
     #матрица того, какие цвета в каком квадрате находятся
 
@@ -82,12 +83,17 @@ def run():
          Figure([[-2, 4], [-1, 4], [-1, 5], [-1, 6]], [d1, d2, d3, d4], (255, 0, 255))]
     activeFigure = deepcopy(choice(startFigures))
     count = 0
-
+    cueter_kadr = 0 #кол-во итераций цикла после последнего полного заполнения ряда
+    rowToDelete = set() #множество рядок для удаления
     while True:
 
         count += 1
         clock.tick(FPS)
         screen.fill((64, 64, 64))
+        text_line = myfont.render(f"Линии: {res}", True, "White")
+        text_point = myfont.render(f"Очки: {res * 40}", True, "White")
+        screen.blit(text_point, (10 * HEIGHT + 10 + 30, 100))
+        screen.blit(text_line, (10 * HEIGHT + 10 + 30, 200))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -104,6 +110,15 @@ def run():
         for col in range(k):
             for row in range(10):
                 squere(col, row, A[col][row])
+        if (len(rowToDelete) > 0):
+            if cueter_kadr < 5:
+                cueter_kadr += 1
+            else:
+                distact(rowToDelete)
+                res += len(rowToDelete)
+                rowToDelete = set()
+                cueter_kadr = 0
+            continue
         #pygame.display.flip()
         L_copy = deepcopy(activeFigure.cord)
         if activeFigure.can_down():
@@ -115,6 +130,10 @@ def run():
             #остановка и создание нового блока
             activeFigure.moving(L_copy)
             for i,j in activeFigure.cord: A[i][j] = activeFigure.color
+            rowToDelete = need_distact({i for i, j in activeFigure.cord})
+            cueter_kadr = 0
+            if activeFigure.is_lose():
+                sys.exit()
             activeFigure = deepcopy(choice(startFigures))
         if (count >= 10):
             count = 0
@@ -129,3 +148,4 @@ pygame.display.set_caption("Tetrix")
 pygame.mixer.init()
 clock = pygame.time.Clock()
 run()
+
